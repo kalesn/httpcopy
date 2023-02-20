@@ -254,10 +254,6 @@ func (o *FileOutput) PluginWrite(msg *Message) (n int, err error) {
 	o.currentFileSize += n
 	o.QueueLength++
 
-	//if Settings.OutputFileConfig.OutputFileMaxSize > 0 && o.totalFileSize >= Settings.OutputFileConfig.OutputFileMaxSize {
-	//	return n, errors.New("File output reached size limit")
-	//}
-
 	return n, err
 }
 
