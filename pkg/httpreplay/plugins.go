@@ -1,8 +1,6 @@
 package httpreplay
 
 import (
-	. "httpcopy/pkg/input"
-	. "httpcopy/pkg/output"
 	"reflect"
 	"strings"
 )

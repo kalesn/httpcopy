@@ -1,10 +1,9 @@
-package output
+package httpreplay
 
 import (
 	"bufio"
 	"compress/gzip"
 	"fmt"
-	"httpcopy/pkg/httpreplay"
 	"io"
 	"log"
 	"math/rand"
@@ -212,10 +211,10 @@ func (o *FileOutput) updateName() {
 }
 
 // PluginWrite writes message to this plugin
-func (o *FileOutput) PluginWrite(msg *httpreplay.Message) (n int, err error) {
+func (o *FileOutput) PluginWrite(msg *Message) (n int, err error) {
 	if o.requestPerFile {
 		o.Lock()
-		meta := httpreplay.PayloadMeta(msg.Meta)
+		meta := PayloadMeta(msg.Meta)
 		o.currentID = meta[1]
 		o.payloadType = meta[0]
 		o.Unlock()
@@ -248,7 +247,7 @@ func (o *FileOutput) PluginWrite(msg *httpreplay.Message) (n int, err error) {
 	n, err = o.writer.Write(msg.Meta)
 	nn, err = o.writer.Write(msg.Data)
 	n += nn
-	payloadSeparatorAsBytes := []byte(httpreplay.PayloadSeparator)
+	payloadSeparatorAsBytes := []byte(PayloadSeparator)
 	nn, err = o.writer.Write(payloadSeparatorAsBytes)
 	n += nn
 
