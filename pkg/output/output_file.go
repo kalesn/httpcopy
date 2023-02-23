@@ -1,9 +1,10 @@
-package httpreplay
+package output
 
 import (
 	"bufio"
 	"compress/gzip"
 	"fmt"
+	"httpcopy/pkg/httpreplay"
 	"io"
 	"log"
 	"math/rand"
@@ -17,6 +18,7 @@ import (
 	"time"
 
 	"httpcopy/pkg/size"
+	//_ "httpcopy/pkg/httpreplay"
 )
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -63,7 +65,7 @@ type FileOutput struct {
 	sync.RWMutex
 	pathTemplate    string
 	currentName     string
-	file            *os.File
+	File            *os.File
 	QueueLength     int
 	writer          io.Writer
 	requestPerFile  bool
@@ -210,10 +212,10 @@ func (o *FileOutput) updateName() {
 }
 
 // PluginWrite writes message to this plugin
-func (o *FileOutput) PluginWrite(msg *Message) (n int, err error) {
+func (o *FileOutput) PluginWrite(msg *httpreplay.Message) (n int, err error) {
 	if o.requestPerFile {
 		o.Lock()
-		meta := payloadMeta(msg.Meta)
+		meta := httpreplay.PayloadMeta(msg.Meta)
 		o.currentID = meta[1]
 		o.payloadType = meta[0]
 		o.Unlock()
@@ -223,16 +225,16 @@ func (o *FileOutput) PluginWrite(msg *Message) (n int, err error) {
 	o.Lock()
 	defer o.Unlock()
 
-	if o.file == nil || o.currentName != o.file.Name() {
+	if o.File == nil || o.currentName != o.File.Name() {
 		o.closeLocked()
 
-		o.file, err = os.OpenFile(o.currentName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0660)
-		o.file.Sync()
+		o.File, err = os.OpenFile(o.currentName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0660)
+		o.File.Sync()
 
 		if strings.HasSuffix(o.currentName, ".gz") {
-			o.writer = gzip.NewWriter(o.file)
+			o.writer = gzip.NewWriter(o.File)
 		} else {
-			o.writer = bufio.NewWriter(o.file)
+			o.writer = bufio.NewWriter(o.File)
 		}
 
 		if err != nil {
@@ -246,7 +248,7 @@ func (o *FileOutput) PluginWrite(msg *Message) (n int, err error) {
 	n, err = o.writer.Write(msg.Meta)
 	nn, err = o.writer.Write(msg.Data)
 	n += nn
-	payloadSeparatorAsBytes := []byte(payloadSeparator)
+	payloadSeparatorAsBytes := []byte(httpreplay.PayloadSeparator)
 	nn, err = o.writer.Write(payloadSeparatorAsBytes)
 	n += nn
 
@@ -268,14 +270,14 @@ func (o *FileOutput) flush() {
 	o.Lock()
 	defer o.Unlock()
 
-	if o.file != nil {
+	if o.File != nil {
 		if strings.HasSuffix(o.currentName, ".gz") {
 			o.writer.(*gzip.Writer).Flush()
 		} else {
 			o.writer.(*bufio.Writer).Flush()
 		}
 
-		if stat, err := o.file.Stat(); err == nil {
+		if stat, err := o.File.Stat(); err == nil {
 			o.currentFileSize = int(stat.Size())
 		} else {
 			fmt.Println(0, "[OUTPUT-HTTP] error accessing file size", err)
@@ -284,20 +286,20 @@ func (o *FileOutput) flush() {
 }
 
 func (o *FileOutput) String() string {
-	return "File output: " + o.file.Name()
+	return "File output: " + o.File.Name()
 }
 
 func (o *FileOutput) closeLocked() error {
-	if o.file != nil {
+	if o.File != nil {
 		if strings.HasSuffix(o.currentName, ".gz") {
 			o.writer.(*gzip.Writer).Close()
 		} else {
 			o.writer.(*bufio.Writer).Flush()
 		}
-		o.file.Close()
+		o.File.Close()
 
 		if o.config.onClose != nil {
-			o.config.onClose(o.file.Name())
+			o.config.onClose(o.File.Name())
 		}
 	}
 

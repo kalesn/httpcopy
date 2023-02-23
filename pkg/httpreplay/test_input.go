@@ -32,9 +32,9 @@ func (i *TestInput) PluginRead() (*Message, error) {
 	case buf := <-i.data:
 		msg.Data = buf
 		if !i.skipHeader {
-			msg.Meta = payloadHeader(RequestPayload, uuid(), time.Now().UnixNano(), -1)
+			msg.Meta = PayloadHeader(RequestPayload, Uuid(), time.Now().UnixNano(), -1)
 		} else {
-			msg.Meta, msg.Data = payloadMetaWithBody(msg.Data)
+			msg.Meta, msg.Data = PayloadMetaWithBody(msg.Data)
 		}
 
 		return &msg, nil

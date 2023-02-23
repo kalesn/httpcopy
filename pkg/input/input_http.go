@@ -1,6 +1,7 @@
-package httpreplay
+package input
 
 import (
+	"httpcopy/pkg/httpreplay"
 	"log"
 	"net"
 	"net/http"
@@ -28,14 +29,14 @@ func NewHTTPInput(address string) (i *HTTPInput) {
 }
 
 // PluginRead reads message from this plugin
-func (i *HTTPInput) PluginRead() (*Message, error) {
-	var msg Message
+func (i *HTTPInput) PluginRead() (*httpreplay.Message, error) {
+	var msg httpreplay.Message
 	select {
 	case <-i.stop:
-		return nil, ErrorStopped
+		return nil, httpreplay.ErrorStopped
 	case buf := <-i.data:
 		msg.Data = buf
-		msg.Meta = payloadHeader(RequestPayload, uuid(), time.Now().UnixNano(), -1)
+		msg.Meta = httpreplay.PayloadHeader(httpreplay.RequestPayload, httpreplay.Uuid(), time.Now().UnixNano(), -1)
 		return &msg, nil
 	}
 }

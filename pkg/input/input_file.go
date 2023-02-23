@@ -1,4 +1,4 @@
-package httpreplay
+package input
 
 import (
 	"bufio"
@@ -8,6 +8,7 @@ import (
 	"errors"
 	"expvar"
 	"fmt"
+	"httpcopy/pkg/httpreplay"
 	"io"
 	"math"
 	"os"
@@ -63,7 +64,7 @@ type fileInputReader struct {
 }
 
 func (f *fileInputReader) parse(init chan struct{}) error {
-	payloadSeparatorAsBytes := []byte(payloadSeparator)
+	payloadSeparatorAsBytes := []byte(httpreplay.PayloadSeparator)
 	var buffer bytes.Buffer
 	var initialized bool
 
@@ -90,7 +91,7 @@ func (f *fileInputReader) parse(init chan struct{}) error {
 
 		if bytes.Equal(payloadSeparatorAsBytes[1:], line) {
 			asBytes := buffer.Bytes()
-			meta := payloadMeta(asBytes)
+			meta := httpreplay.PayloadMeta(asBytes)
 
 			if len(meta) < 3 {
 				fmt.Println(1, fmt.Sprintf("Found malformed record, file: %s, line %d", f.path, lineNum))
@@ -198,7 +199,7 @@ type FileInput struct {
 	exit        chan bool
 	path        string
 	readers     []*fileInputReader
-	speedFactor float64
+	SpeedFactor float64
 	loop        bool
 	readDepth   int
 	dryRun      bool
@@ -213,7 +214,7 @@ func NewFileInput(path string, loop bool, readDepth int, maxWait time.Duration, 
 	i.data = make(chan []byte, 1000)
 	i.exit = make(chan bool)
 	i.path = path
-	i.speedFactor = 1
+	i.SpeedFactor = 1
 	i.loop = loop
 	i.readDepth = readDepth
 	i.stats = expvar.NewMap("file-" + path)
@@ -269,8 +270,8 @@ func (i *FileInput) emit() {
 				firstWait = diff
 			}
 
-			if i.speedFactor != 1 {
-				diff = int64(float64(diff) / i.speedFactor)
+			if i.SpeedFactor != 1 {
+				diff = int64(float64(diff) / i.SpeedFactor)
 			}
 
 			if i.maxWait > 0 && diff > int64(i.maxWait) {
@@ -359,14 +360,14 @@ func (i *FileInput) init() (err error) {
 }
 
 // PluginRead reads message from this plugin
-func (i *FileInput) PluginRead() (*Message, error) {
-	var msg Message
+func (i *FileInput) PluginRead() (*httpreplay.Message, error) {
+	var msg httpreplay.Message
 	select {
 	case <-i.exit:
-		return nil, ErrorStopped
+		return nil, httpreplay.ErrorStopped
 	case buf := <-i.data:
 		i.stats.Add("read_from", 1)
-		msg.Meta, msg.Data = payloadMetaWithBody(buf)
+		msg.Meta, msg.Data = httpreplay.PayloadMetaWithBody(buf)
 		return &msg, nil
 	}
 }

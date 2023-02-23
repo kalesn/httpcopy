@@ -1,6 +1,8 @@
 package httpreplay
 
 import (
+	. "httpcopy/pkg/input"
+	. "httpcopy/pkg/output"
 	"reflect"
 	"strings"
 )
@@ -44,6 +46,30 @@ func extractLimitOptions(options string) (string, string) {
 	}
 
 	return split[0], ""
+}
+
+// NewPlugins specify and initialize all available plugins
+func NewPlugins() *InOutPlugins {
+	plugins := new(InOutPlugins)
+
+	for _, options := range Settings.InputFile {
+		plugins.registerPlugin(NewFileInput, options, Settings.InputFileLoop, Settings.InputFileReadDepth, Settings.InputFileMaxWait, Settings.InputFileDryRun)
+	}
+
+	for _, path := range Settings.OutputFile {
+		plugins.registerPlugin(NewFileOutput, path, &Settings.OutputFileConfig)
+
+	}
+
+	for _, options := range Settings.InputHTTP {
+		plugins.registerPlugin(NewHTTPInput, options)
+	}
+
+	for _, options := range Settings.OutputHTTP {
+		plugins.registerPlugin(NewHTTPOutput, options, &Settings.OutputHTTPConfig)
+	}
+
+	return plugins
 }
 
 // Automatically detects type of plugin and initialize it

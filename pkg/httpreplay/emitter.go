@@ -61,7 +61,7 @@ func CopyMulty(src PluginReader, writers ...PluginWriter) error {
 			//if len(msg.Data) > int(Settings.CopyBufferSize) {
 			//	msg.Data = msg.Data[:Settings.CopyBufferSize]
 			//}
-			meta := payloadMeta(msg.Meta)
+			meta := PayloadMeta(msg.Meta)
 			if len(meta) < 3 {
 				fmt.Println(2, fmt.Sprintf("[EMITTER] Found malformed record %q from %q", msg.Meta, src))
 				continue

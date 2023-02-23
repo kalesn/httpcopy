@@ -24,20 +24,20 @@ func randByte(len int) []byte {
 	return h
 }
 
-func uuid() []byte {
+func Uuid() []byte {
 	return randByte(24)
 }
 
-var payloadSeparator = "\n🐵🙈🙉\n"
+var PayloadSeparator = "\n🐵🙈🙉\n"
 
 func payloadScanner(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	if atEOF && len(data) == 0 {
 		return 0, nil, nil
 	}
 
-	if i := bytes.Index(data, []byte(payloadSeparator)); i >= 0 {
+	if i := bytes.Index(data, []byte(PayloadSeparator)); i >= 0 {
 		// We have a full newline-terminated line.
-		return i + len([]byte(payloadSeparator)), data[0:i], nil
+		return i + len([]byte(PayloadSeparator)), data[0:i], nil
 	}
 
 	if atEOF {
@@ -47,7 +47,7 @@ func payloadScanner(data []byte, atEOF bool) (advance int, token []byte, err err
 }
 
 // Timing is request start or round-trip time, depending on payloadType
-func payloadHeader(payloadType byte, uuid []byte, timing int64, latency int64) (header []byte) {
+func PayloadHeader(payloadType byte, uuid []byte, timing int64, latency int64) (header []byte) {
 	//Example:
 	//  3 f45590522cd1838b4a0d5c5aab80b77929dea3b3 13923489726487326 1231\n
 	return []byte(fmt.Sprintf("%c %s %d %d\n", payloadType, uuid, timing, latency))
@@ -58,7 +58,7 @@ func payloadBody(payload []byte) []byte {
 	return payload[headerSize+1:]
 }
 
-func payloadMeta(payload []byte) [][]byte {
+func PayloadMeta(payload []byte) [][]byte {
 	headerSize := bytes.IndexByte(payload, '\n')
 	if headerSize < 0 {
 		return nil
@@ -66,7 +66,7 @@ func payloadMeta(payload []byte) [][]byte {
 	return bytes.Split(payload[:headerSize], []byte{' '})
 }
 
-func payloadMetaWithBody(payload []byte) (meta, body []byte) {
+func PayloadMetaWithBody(payload []byte) (meta, body []byte) {
 	if i := bytes.IndexByte(payload, '\n'); i > 0 && len(payload) > i+1 {
 		meta = payload[:i+1]
 		body = payload[i+1:]
@@ -76,8 +76,8 @@ func payloadMetaWithBody(payload []byte) (meta, body []byte) {
 	return nil, payload
 }
 
-func payloadID(payload []byte) (id []byte) {
-	meta := payloadMeta(payload)
+func PayloadID(payload []byte) (id []byte) {
+	meta := PayloadMeta(payload)
 
 	if len(meta) < 2 {
 		return
@@ -89,6 +89,6 @@ func isOriginPayload(payload []byte) bool {
 	return payload[0] == RequestPayload || payload[0] == ResponsePayload
 }
 
-func isRequestPayload(payload []byte) bool {
+func IsRequestPayload(payload []byte) bool {
 	return payload[0] == RequestPayload
 }
