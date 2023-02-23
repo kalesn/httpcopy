@@ -55,39 +55,30 @@ func main() {
 
 	args := os.Args[1:]
 	var plugins *httpreplay.InOutPlugins
-	if len(args) > 0 && args[0] == "file-server" {
-		if len(args) != 2 {
-			log.Fatal("You should specify port and IP (optional) for the file server. Example: `gor file-server :80`")
-
-			fmt.Println(0, "Started example file server for current directory on address ", args[1])
-
-		} else {
-			flag.Parse()
-			httpreplay.CheckSettings()
-			plugins = httpreplay.NewPlugins()
-
-		}
-
-		log.Printf("[PPID %d and PID %d] \n", os.Getppid(), os.Getpid())
-
-		if len(plugins.Inputs) == 0 || len(plugins.Outputs) == 0 {
-			log.Fatal("Required at least 1 input and 1 output")
-		}
-
-		closeCh := make(chan int)
-		emitter := httpreplay.NewEmitter()
-		go emitter.Start(plugins)
-
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-		exit := 0
-		select {
-		case <-c:
-			exit = 1
-		case <-closeCh:
-			exit = 0
-		}
-		emitter.Close()
-		os.Exit(exit)
+	if len(args) > 0 {
+		flag.Parse()
+		httpreplay.CheckSettings()
+		plugins = httpreplay.NewPlugins()
 	}
+	log.Printf("[PPID %d and PID %d] \n", os.Getppid(), os.Getpid())
+
+	if len(plugins.Inputs) == 0 || len(plugins.Outputs) == 0 {
+		log.Fatal("Required at least 1 input and 1 output")
+	}
+
+	closeCh := make(chan int)
+	emitter := httpreplay.NewEmitter()
+	go emitter.Start(plugins)
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	exit := 0
+	select {
+	case <-c:
+		exit = 1
+	case <-closeCh:
+		exit = 0
+	}
+	emitter.Close()
+	os.Exit(exit)
 }

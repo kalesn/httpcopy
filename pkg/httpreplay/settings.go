@@ -82,7 +82,7 @@ type AppSettings struct {
 	OutputFile         []string      `json:"output-file"`
 	OutputFileConfig   FileOutputConfig
 
-	InputHTTP    []string
+	InputHTTP    []string `json:"input-http"`
 	OutputHTTP   []string `json:"output-http"`
 	PrettifyHTTP bool     `json:"prettify-http"`
 
@@ -116,13 +116,16 @@ func init() {
 	flag.BoolVar(&Settings.OutputStdout, "output-stdout", false, "Used for testing inputs. Just prints to console data coming from inputs.")
 	flag.BoolVar(&Settings.OutputNull, "output-null", false, "Used for testing inputs. Drops all requests.")
 
-	flag.Var(&MultiOption{&Settings.InputFile}, "input-file", "Read requests from file: \n\tgor --input-file ./requests.gor --output-http staging.com")
+	//input-http flag
+	flag.Var(&MultiOption{&Settings.InputHTTP}, "input-http", "Read requests from file: \n\thttpcopy --input-http ./requests.gor --output-http staging.com")
+
+	flag.Var(&MultiOption{&Settings.InputFile}, "input-file", "Read requests from file: \n\thttpcopy --input-file ./requests.gor --output-http staging.com")
 	flag.BoolVar(&Settings.InputFileLoop, "input-file-loop", false, "Loop input files, useful for performance testing.")
 	flag.IntVar(&Settings.InputFileReadDepth, "input-file-read-depth", 100, "GoReplay tries to read and cache multiple records, in advance. In parallel it also perform sorting of requests, if they came out of order. Since it needs hold this buffer in memory, bigger values can cause worse performance")
 	flag.BoolVar(&Settings.InputFileDryRun, "input-file-dry-run", false, "Simulate reading from the data source without replaying it. You will get information about expected replay time, number of found records etc.")
 	flag.DurationVar(&Settings.InputFileMaxWait, "input-file-max-wait", 0, "Set the maximum time between requests. Can help in situations when you have too long periods between request, and you want to skip them. Example: --input-raw-max-wait 1s")
 
-	flag.Var(&MultiOption{&Settings.OutputFile}, "output-file", "Write incoming requests to file: \n\tgor --input-raw :80 --output-file ./requests.gor")
+	flag.Var(&MultiOption{&Settings.OutputFile}, "output-file", "Write incoming requests to file: \n\thttpcopy --input-raw :80 --output-file ./requests.gor")
 
 	flag.BoolVar(&Settings.PrettifyHTTP, "prettify-http", false, "If enabled, will automatically decode requests and responses with: Content-Encoding: gzip and Transfer-Encoding: chunked. Useful for debugging, in conjunction with --output-stdout")
 
