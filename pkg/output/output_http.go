@@ -1,10 +1,11 @@
-package httpreplay
+package output
 
 import (
 	"bufio"
 	"bytes"
 	"crypto/tls"
 	"fmt"
+	"httpcopy/pkg/httpreplay"
 	"httpcopy/pkg/size"
 	"log"
 	"math"
@@ -69,17 +70,17 @@ func (hoc *HTTPOutputConfig) Copy() *HTTPOutputConfig {
 type HTTPOutput struct {
 	activeWorkers int32
 	config        *HTTPOutputConfig
-	queueStats    *GorStat
+	queueStats    *httpreplay.GorStat
 	client        *HTTPClient
 	stopWorker    chan struct{}
-	queue         chan *Message
+	queue         chan *httpreplay.Message
 	responses     chan *response
 	stop          chan bool // Channel used only to indicate goroutine should shutdown
 }
 
 // NewHTTPOutput constructor for HTTPOutput
 // Initialize workers
-func NewHTTPOutput(address string, config *HTTPOutputConfig) PluginReadWriter {
+func NewHTTPOutput(address string, config *HTTPOutputConfig) httpreplay.PluginReadWriter {
 	o := new(HTTPOutput)
 	var err error
 	newConfig := config.Copy()
@@ -121,10 +122,10 @@ func NewHTTPOutput(address string, config *HTTPOutputConfig) PluginReadWriter {
 	o.config = newConfig
 	o.stop = make(chan bool)
 	if o.config.Stats {
-		o.queueStats = NewGorStat("output_http", o.config.StatsMs)
+		o.queueStats = httpreplay.NewGorStat("output_http", o.config.StatsMs)
 	}
 
-	o.queue = make(chan *Message, o.config.QueueLen)
+	o.queue = make(chan *httpreplay.Message, o.config.QueueLen)
 	if o.config.TrackResponses {
 		o.responses = make(chan *response, o.config.QueueLen)
 	}
@@ -179,14 +180,14 @@ func (o *HTTPOutput) startWorker() {
 }
 
 // PluginWrite writes message to this plugin
-func (o *HTTPOutput) PluginWrite(msg *Message) (n int, err error) {
-	if !isRequestPayload(msg.Meta) {
+func (o *HTTPOutput) PluginWrite(msg *httpreplay.Message) (n int, err error) {
+	if !httpreplay.IsRequestPayload(msg.Meta) {
 		return len(msg.Data), nil
 	}
 
 	select {
 	case <-o.stop:
-		return 0, ErrorStopped
+		return 0, httpreplay.ErrorStopped
 	case o.queue <- msg:
 	}
 
@@ -204,30 +205,30 @@ func (o *HTTPOutput) PluginWrite(msg *Message) (n int, err error) {
 }
 
 // PluginRead reads message from this plugin
-func (o *HTTPOutput) PluginRead() (*Message, error) {
+func (o *HTTPOutput) PluginRead() (*httpreplay.Message, error) {
 	if !o.config.TrackResponses {
-		return nil, ErrorStopped
+		return nil, httpreplay.ErrorStopped
 	}
 	var resp *response
-	var msg Message
+	var msg httpreplay.Message
 	select {
 	case <-o.stop:
-		return nil, ErrorStopped
+		return nil, httpreplay.ErrorStopped
 	case resp = <-o.responses:
 		msg.Data = resp.payload
 	}
 
-	msg.Meta = payloadHeader(ReplayedResponsePayload, resp.uuid, resp.startedAt, resp.roundTripTime)
+	msg.Meta = httpreplay.PayloadHeader(httpreplay.ReplayedResponsePayload, resp.uuid, resp.startedAt, resp.roundTripTime)
 
 	return &msg, nil
 }
 
-func (o *HTTPOutput) sendRequest(client *HTTPClient, msg *Message) {
-	if !isRequestPayload(msg.Meta) {
+func (o *HTTPOutput) sendRequest(client *HTTPClient, msg *httpreplay.Message) {
+	if !httpreplay.IsRequestPayload(msg.Meta) {
 		return
 	}
 
-	uuid := payloadID(msg.Meta)
+	uuid := httpreplay.PayloadID(msg.Meta)
 	start := time.Now()
 	resp, err := client.Send(msg.Data)
 	stop := time.Now()
