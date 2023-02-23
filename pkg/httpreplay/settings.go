@@ -3,7 +3,6 @@ package httpreplay
 import (
 	"flag"
 	"fmt"
-	"httpcopy/pkg/output"
 	"httpcopy/pkg/size"
 	"os"
 	"strconv"
@@ -81,13 +80,13 @@ type AppSettings struct {
 	InputFileDryRun    bool          `json:"input-file-dry-run"`
 	InputFileMaxWait   time.Duration `json:"input-file-max-wait"`
 	OutputFile         []string      `json:"output-file"`
-	OutputFileConfig   output.FileOutputConfig
+	OutputFileConfig   FileOutputConfig
 
 	InputHTTP    []string
 	OutputHTTP   []string `json:"output-http"`
 	PrettifyHTTP bool     `json:"prettify-http"`
 
-	OutputHTTPConfig output.HTTPOutputConfig
+	OutputHTTPConfig HTTPOutputConfig
 }
 
 // Settings holds Gor configuration

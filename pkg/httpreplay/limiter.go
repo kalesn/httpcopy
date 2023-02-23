@@ -2,7 +2,6 @@ package httpreplay
 
 import (
 	"fmt"
-	"httpcopy/pkg/input"
 	"io"
 	"math/rand"
 	"strconv"
@@ -41,7 +40,7 @@ func NewLimiter(plugin interface{}, options string) PluginReadWriter {
 	l.currentTime = time.Now().UnixNano()
 
 	// FileInput have its own rate limiting. Unlike other inputs we not just dropping requests, we can slow down or speed up request emittion.
-	if fi, ok := l.plugin.(*input.FileInput); ok && l.isPercent {
+	if fi, ok := l.plugin.(*FileInput); ok && l.isPercent {
 		fi.SpeedFactor = float64(l.limit) / float64(100)
 	}
 
@@ -50,7 +49,7 @@ func NewLimiter(plugin interface{}, options string) PluginReadWriter {
 
 func (l *Limiter) isLimited() bool {
 	// File input have its own limiting algorithm
-	if _, ok := l.plugin.(*input.FileInput); ok && l.isPercent {
+	if _, ok := l.plugin.(*FileInput); ok && l.isPercent {
 		return false
 	}
 

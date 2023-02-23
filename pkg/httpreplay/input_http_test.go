@@ -1,9 +1,7 @@
-package input
+package httpreplay
 
 import (
 	"bytes"
-	"httpcopy/pkg/httpreplay"
-	output2 "httpcopy/pkg/output"
 	"net/http"
 	"strings"
 	"testing"
@@ -18,15 +16,15 @@ func TestHTTPInput(t *testing.T) {
 	//output := NewTestOutput(func(*Message) {
 	//	wg.Done()
 	//})
-	output := output2.NewFileOutput("/tmp/test_requests_0.gor", &output2.FileOutputConfig{FlushInterval: time.Minute, Append: true})
+	output := NewFileOutput("/tmp/test_requests_0.gor", &FileOutputConfig{FlushInterval: time.Minute, Append: true})
 
-	plugins := &httpreplay.InOutPlugins{
-		Inputs:  []httpreplay.PluginReader{input},
-		Outputs: []httpreplay.PluginWriter{output},
+	plugins := &InOutPlugins{
+		Inputs:  []PluginReader{input},
+		Outputs: []PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 
-	emitter := httpreplay.NewEmitter()
+	emitter := NewEmitter()
 	go emitter.Start(plugins)
 
 	address := strings.Replace(input.address, "[::]", "127.0.0.1", -1)
@@ -54,14 +52,14 @@ func TestInputHTTPLargePayload(t *testing.T) {
 	//	}
 	//	wg.Done()
 	//})
-	output := output2.NewFileOutput("/tmp/test_requests_0.gor", &output2.FileOutputConfig{FlushInterval: time.Minute, Append: true})
-	plugins := &httpreplay.InOutPlugins{
-		Inputs:  []httpreplay.PluginReader{input},
-		Outputs: []httpreplay.PluginWriter{output},
+	output := NewFileOutput("/tmp/test_requests_0.gor", &FileOutputConfig{FlushInterval: time.Minute, Append: true})
+	plugins := &InOutPlugins{
+		Inputs:  []PluginReader{input},
+		Outputs: []PluginWriter{output},
 	}
 	plugins.All = append(plugins.All, input, output)
 
-	emitter := httpreplay.NewEmitter()
+	emitter := NewEmitter()
 	defer emitter.Close()
 	go emitter.Start(plugins)
 

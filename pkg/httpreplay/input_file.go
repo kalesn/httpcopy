@@ -1,4 +1,4 @@
-package input
+package httpreplay
 
 import (
 	"bufio"
@@ -8,7 +8,6 @@ import (
 	"errors"
 	"expvar"
 	"fmt"
-	"httpcopy/pkg/httpreplay"
 	"io"
 	"math"
 	"os"
@@ -64,7 +63,7 @@ type fileInputReader struct {
 }
 
 func (f *fileInputReader) parse(init chan struct{}) error {
-	payloadSeparatorAsBytes := []byte(httpreplay.PayloadSeparator)
+	payloadSeparatorAsBytes := []byte(PayloadSeparator)
 	var buffer bytes.Buffer
 	var initialized bool
 
@@ -91,7 +90,7 @@ func (f *fileInputReader) parse(init chan struct{}) error {
 
 		if bytes.Equal(payloadSeparatorAsBytes[1:], line) {
 			asBytes := buffer.Bytes()
-			meta := httpreplay.PayloadMeta(asBytes)
+			meta := PayloadMeta(asBytes)
 
 			if len(meta) < 3 {
 				fmt.Println(1, fmt.Sprintf("Found malformed record, file: %s, line %d", f.path, lineNum))
@@ -360,14 +359,14 @@ func (i *FileInput) init() (err error) {
 }
 
 // PluginRead reads message from this plugin
-func (i *FileInput) PluginRead() (*httpreplay.Message, error) {
-	var msg httpreplay.Message
+func (i *FileInput) PluginRead() (*Message, error) {
+	var msg Message
 	select {
 	case <-i.exit:
-		return nil, httpreplay.ErrorStopped
+		return nil, ErrorStopped
 	case buf := <-i.data:
 		i.stats.Add("read_from", 1)
-		msg.Meta, msg.Data = httpreplay.PayloadMetaWithBody(buf)
+		msg.Meta, msg.Data = PayloadMetaWithBody(buf)
 		return &msg, nil
 	}
 }
