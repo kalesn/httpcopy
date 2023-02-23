@@ -117,7 +117,7 @@ func init() {
 	flag.BoolVar(&Settings.OutputNull, "output-null", false, "Used for testing inputs. Drops all requests.")
 
 	//input-http flag
-	flag.Var(&MultiOption{&Settings.InputHTTP}, "input-http", "Read requests from file: \n\thttpcopy --input-http ./requests.gor --output-http staging.com")
+	flag.Var(&MultiOption{&Settings.InputHTTP}, "input-http", "Read requests from file: \n\thttpcopy --input-http :28080[port] --output-http staging.com")
 
 	flag.Var(&MultiOption{&Settings.InputFile}, "input-file", "Read requests from file: \n\thttpcopy --input-file ./requests.gor --output-http staging.com")
 	flag.BoolVar(&Settings.InputFileLoop, "input-file-loop", false, "Loop input files, useful for performance testing.")
